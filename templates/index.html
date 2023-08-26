@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<main>
+    <div class="container">
+        <h1>Image Resizer</h1>
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload Image</h5>
+                        <form method="post" target="{{target}}" enctype="multipart/form-data">{% csrf_token %}
+                            <div class="mb-3">
+                                {{form.as_p}}
+                            </div>
+                            <button type="submit" class="btn btn-primary">Resize Image</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock content %}
