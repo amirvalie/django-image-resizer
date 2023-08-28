@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 {% block content %}
 <main>
     <div class="container">
@@ -8,24 +9,23 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Resize Image</h5>
-                        <form>
+                        <form method="post">{% csrf_token %}
                             <div class="row mb-3">
                                 <div class="col">
-                                    <label for="width">Width</label>
-                                    <input type="text" class="form-control" id="width">
+                                    <label for="{{form.width.id_for_label}}">Width:</label>
+                                    {{form.width.errors}}
+                                    {{form.width|add_class:"form-control"}}
                                 </div>
                                 <div class="col">
-                                    <label for="height">Height</label>
-                                    <input type="text" class="form-control" id="height">
+                                    <label for="{{form.height.id_for_label}}">Height:</label>
+                                    {{form.height.errors}}
+                                    {{form.height|add_class:"form-control"}}
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="format">Format</label>
-                                <select class="form-control" id="format">
-                                    <option value="png">PNG</option>
-                                    <option value="jpg">JPG</option>
-                                    <option value="wav">WAV</option>
-                                </select>
+                                <label for="{{form.format.id_for_label}}">Format:</label>
+                                {{form.format.errors}}
+                                {{form.format|add_class:"form-control"}}
                             </div>
                             <button type="submit" class="btn btn-primary">Reformat Image</button>
                         </form>
@@ -36,7 +36,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Image Preview</h5>
-                        <img src="sing" alt="Image Preview" class="img-fluid">
+                        <img src="data:image/jpeg;base64,{{image}}" alt="Image Preview" class="img-fluid">
                     </div>
                 </div>
             </div>

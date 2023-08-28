@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 {% block content %}
 <main>
     <div class="container">
@@ -8,9 +9,10 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Upload Image</h5>
-                        <form method="post" target="{{target}}" enctype="multipart/form-data">{% csrf_token %}
+                        <form method="post" enctype="multipart/form-data">{% csrf_token %}
                             <div class="mb-3">
-                                {{form.as_p}}
+                                {{form.image.errors}}
+                                {{form.image|add_class:"form-control"}}
                             </div>
                             <button type="submit" class="btn btn-primary">Resize Image</button>
                         </form>
