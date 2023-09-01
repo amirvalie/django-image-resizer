@@ -23,9 +23,10 @@
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="{{form.format.id_for_label}}">Format:</label>
-                                {{form.format.errors}}
-                                {{form.format|add_class:"form-control"}}
+                                <label for="{{form.aspect_ratio.id_for_label}}">Aspect ratio:</label>
+                                {{form.aspect_ratio.errors}}
+                                {{form.aspect_ratio}}
+                                <small>{{ form.aspect_ratio.help_text }}</small>
                             </div>
                             <button type="submit" class="btn btn-primary">Reformat Image</button>
                         </form>
@@ -36,7 +37,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Image Preview</h5>
-                        <img src="data:image/jpeg;base64,{{image}}" alt="Image Preview" class="img-fluid">
+                        <img src="{{image.url}}" alt="Image Preview" class="img-fluid">
                     </div>
                 </div>
             </div>
