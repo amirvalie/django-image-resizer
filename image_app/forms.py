@@ -1,11 +1,14 @@
 from turtle import width
 from django import forms
 from django.core.exceptions import ValidationError
+from traitlets import default
+from .models import UploadImage
 
 
-
-class ImageForm(forms.Form):
-    image = forms.ImageField()
+class ImageForm(forms.ModelForm):
+    class Meta:
+        model = UploadImage
+        fields = ('image',)
 
     def clean_image(self):
         image = self.cleaned_data.get('image')
@@ -24,4 +27,9 @@ IMAGE_FORMAT_CHOICES = (
 class ResizeImageForm(forms.Form):
     width = forms.IntegerField(max_value=2000)
     height = forms.IntegerField(max_value=2000)
-    format = forms.ChoiceField(choices=IMAGE_FORMAT_CHOICES)
+    aspect_ratio = forms.BooleanField(
+        label='Preserve Aspect Ratio',
+        help_text='Select whether to preserve the aspect ratio of the image.',
+        initial=True,
+        required=False,
+    )
