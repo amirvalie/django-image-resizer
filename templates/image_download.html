@@ -1,0 +1,24 @@
+<!-- {% block content %}
+{% endblock content%} -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Download Image</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 50vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1>Your IMAGES is ready to download!</h1>
+        <a href="{{image_object.image.url}}" class="btn btn-primary btn-lg">Download</a>
+    </div>
+</body>
+</html>
