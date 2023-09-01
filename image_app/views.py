@@ -1,78 +1,81 @@
-import base64
-import binascii
-from PIL import Image
-from io import BytesIO
-from django.shortcuts import redirect, render, HttpResponse
+from django.shortcuts import redirect, render, get_object_or_404
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
 from django.views import View
 from django.urls import reverse
 from .forms import ImageForm, ResizeImageForm
-from django.core.exceptions import SuspiciousOperation
+from .image_utils.image_resize import ImageResize
+from .models import UploadImage
 
 
 class UploadImageView(View):
     forms_class = ImageForm
-    def select_target(self):
+
+    def select_target(self, **kwargs):
         targets = {
-            reverse('images:image_resize_upload'): reverse('images:image_resize')
+            reverse('images:image_resize_upload'): reverse('images:image_resize', kwargs=kwargs)
         }
         target = targets.get(self.request.path)
-        return target if target else reverse('images:image_resize')
+        return target if target else reverse('images:image_resize', **kwargs)
 
     def get(self, request, *args, **kwargs):
-        return render(request, 'index.html', {'form':self.forms_class(),'action':self.select_target()})
+        return render(request, 'index.html', {'form':self.forms_class()})
 
     def post(self, request, *args, **kwargs):
         form = self.forms_class(request.POST, request.FILES)
         if form.is_valid():
-            print(request.FILES)
-            image_data = request.FILES.get('image').read()
-            encoded_data = base64.b64encode(image_data).decode('utf-8')
-            self.request.session['image'] = encoded_data
-            return redirect(self.select_target())
-        return render(request, 'index.html', {'form':form,'action':self.select_target()})
+            image_object = form.save()
+            print(image_object.image.name)
+            uid = urlsafe_base64_encode(force_bytes(image_object.image.name))
+            return redirect(self.select_target(uidb64=uid))
+        return render(request, 'index.html', {'form':form})
 
 
 class ImageResizeView(View):
     resize_image_form = ResizeImageForm
-    def get_image(self, delete=False):
-        import PIL
-        try:
-            if delete:
-                image_data = self.request.session.pop('image')
-            else:
-                image_data = self.request.session['image']
-        except KeyError:
-            raise KeyError('')
-        try:
-            decoded_data = base64.b64decode(image_data)
-            image = Image.open(BytesIO(decoded_data))
-        except (binascii.Error, PIL.UnidentifiedImageError):
-            raise SuspiciousOperation('')
-        return image
+    name = None
+    def get_object(self):
+        image_name = urlsafe_base64_decode(self.kwargs.get('uidb64')).decode()
+        return get_object_or_404(UploadImage.objects.all(), image=image_name)
 
     def get(self, request, *args, **kwargs):
-        try:
-            image = self.get_image()
-        except:
-            return redirect('images:image_resize_upload')
-        image_data = self.request.session.get('image')
+        self.name = 'Amir'
+        image_object = self.get_object()
+        print('file name in get method:', image_object.image.name)
         initial_data={
-            'width':image.width,
-            'height':image.height,
-            'format':image.format,
+            'width':image_object.image.width,
+            'height':image_object.image.height,
         }
         return render(
             request,
             'image_resizing.html',
             {
                 'form':self.resize_image_form(initial=initial_data),
-                'image':image_data,
+                'image':image_object.image,
             }
         )
 
     def post(self, request, *args, **kwargs):
-        image = self.get_image(delete=True)
         form = self.resize_image_form(request.POST)
         if form.is_valid():
-            return HttpResponse('Ok')
+            image_field = self.get_object().image
+            resize_image = ImageResize(
+                image=image_field,
+                width=form.cleaned_data['width'],
+                height=form.cleaned_data['height'],
+                aspect_ratio=form.cleaned_data['aspect_ratio']
+            )
+            resize_image.save(image_field)
+            uid = urlsafe_base64_encode(force_bytes(image_field.name))
+            return redirect(reverse('images:image_download', kwargs={'uidb64': uid}))
         return render(request, 'image_resizing.html', {'form':form})
+
+
+class DownloadImageView(View):
+
+    def get_object(self):
+        image_name = urlsafe_base64_decode(self.kwargs.get('uidb64')).decode()
+        return get_object_or_404(UploadImage.objects.all(), image=image_name)
+
+    def get(self, request, *args, **kwargs):
+        return render(request, 'image_download.html', {'image_object':self.get_object()})

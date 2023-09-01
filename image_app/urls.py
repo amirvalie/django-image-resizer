@@ -1,15 +1,12 @@
 from django.urls import path
-from .views import ImageResizeView, UploadImageView
+from .views import ImageResizeView, UploadImageView, DownloadImageView
 
 app_name = 'images'
 
 urlpatterns = [
     path('', UploadImageView.as_view(), name='image_resize_upload'),
-    path('reformat-image/', UploadImageView.as_view(), name='image_reformat'),
-    path('compressor-image/', UploadImageView.as_view(), name='image_compressor'),
-    path('crop-image/', UploadImageView.as_view(), name='image_crop'),
-    path('rotate-image/', UploadImageView.as_view(), name='image_rotate'),
-    path('resize-image/', ImageResizeView.as_view(), name='image_resize')
+    path('resize-image/<uidb64>/', ImageResizeView.as_view(), name='image_resize'),
+    path('download/<uidb64>/', DownloadImageView.as_view(), name='image_download'),
 ]
 
 
