@@ -6,6 +6,7 @@ from django.urls import reverse
 from .forms import ImageForm, ResizeImageForm
 from .image_utils.image_resize import ImageResize
 from .models import UploadImage
+from .tasks import task_image_reize
 
 
 class UploadImageView(View):
@@ -59,14 +60,13 @@ class ImageResizeView(View):
         form = self.resize_image_form(request.POST)
         if form.is_valid():
             image_field = self.get_object().image
-            resize_image = ImageResize(
+            result = task_image_reize.delay(
                 image=image_field,
                 width=form.cleaned_data['width'],
                 height=form.cleaned_data['height'],
-                aspect_ratio=form.cleaned_data['aspect_ratio']
-            )
-            resize_image.save(image_field)
-            uid = urlsafe_base64_encode(force_bytes(image_field.name))
+                aspect_ratio=form.cleaned_data['aspect_ratio'],
+            ) # type: ignore
+            uid = result.get()
             return redirect(reverse('images:image_download', kwargs={'uidb64': uid}))
         return render(request, 'image_resizing.html', {'form':form})
 
