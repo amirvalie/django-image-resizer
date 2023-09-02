@@ -1,33 +1,45 @@
+from dataclasses import dataclass
 from io import BytesIO
+from typing import ClassVar, Protocol
 from django.core.files.base import ContentFile
 from django.db.models.fields.files import ImageFieldFile
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
+
+@dataclass
+class BaseImage(Protocol):
+    image: Image.Image
+
+    def create_image_file(self) -> ContentFile:
+        ...
+
+    def save(self) -> None:
+        ...
+
+
+def open_image(image: ImageFieldFile) -> Image.Image:
+    try:
+        image = Image.open(image) # type: ignore
+        return image # type: ignore
+    except IOError:
+        raise IOError
+
+
+def target_file_name(image_name: str) -> str:
+    file_name = image_name.split('/')[-1].split('.')[0]
+    return file_name
 
 class ImageResize:
     def __init__(self,
-                 image: InMemoryUploadedFile,
+                 image: ImageFieldFile,
                  width: int,
                  height: int,
                  aspect_ratio: bool=True,
                  ) -> None:
-        self.image: Image.Image
-        self.image = self._open(image)
+        self.image = open_image(image)
         self.width = width
         self.height = height
         self.aspect_ratio = aspect_ratio
-        self.format= format if format is not None else self.image.format
-
-    def target_file_name(self, image_name: str) -> str:
-        file_name = image_name.split('/')[-1].split('.')[0]
-        return file_name
-
-    def _open(self, image: InMemoryUploadedFile) -> Image.Image:
-        try:
-            opened_image = Image.open(image) # type: ignore
-            return opened_image # type: ignore
-        except IOError:
-            raise IOError
+        self.format= self.image.format
 
     def resize(self) -> ContentFile:
         if self.aspect_ratio == True:
@@ -48,7 +60,7 @@ class ImageResize:
 
     def save(self, field: ImageFieldFile) -> None:
         field.save(
-            f'{self.target_file_name(field.name)}.{self.image.format.lower()}',
+            f'{target_file_name(field.name)}.{self.image.format.lower()}',
             self.resize(),
             save=True,
         )
