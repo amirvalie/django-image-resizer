@@ -14,46 +14,46 @@ class UploadImageView(View):
 
     def select_target(self, **kwargs):
         targets = {
-            reverse('images:image_resize_upload'): reverse('images:image_resize', kwargs=kwargs)
+            reverse("images:image_resize_upload"): reverse(
+                "images:image_resize", kwargs=kwargs
+            )
         }
         target = targets.get(self.request.path)
-        return target if target else reverse('images:image_resize', **kwargs)
+        return target if target else reverse("images:image_resize", **kwargs)
 
     def get(self, request, *args, **kwargs):
-        return render(request, 'index.html', {'form':self.forms_class()})
+        return render(request, "index.html", {"form": self.forms_class()})
 
     def post(self, request, *args, **kwargs):
         form = self.forms_class(request.POST, request.FILES)
         if form.is_valid():
             image_object = form.save()
-            print(image_object.image.name)
             uid = urlsafe_base64_encode(force_bytes(image_object.image.name))
             return redirect(self.select_target(uidb64=uid))
-        return render(request, 'index.html', {'form':form})
+        return render(request, "index.html", {"form": form})
 
 
 class ImageResizeView(View):
     resize_image_form = ResizeImageForm
     name = None
+
     def get_object(self):
-        image_name = urlsafe_base64_decode(self.kwargs.get('uidb64')).decode()
+        image_name = urlsafe_base64_decode(self.kwargs.get("uidb64")).decode()
         return get_object_or_404(UploadImage.objects.all(), image=image_name)
 
     def get(self, request, *args, **kwargs):
-        self.name = 'Amir'
         image_object = self.get_object()
-        print('file name in get method:', image_object.image.name)
-        initial_data={
-            'width':image_object.image.width,
-            'height':image_object.image.height,
+        initial_data = {
+            "width": image_object.image.width,
+            "height": image_object.image.height,
         }
         return render(
             request,
-            'image_resizing.html',
+            "image_resizing.html",
             {
-                'form':self.resize_image_form(initial=initial_data),
-                'image':image_object.image,
-            }
+                "form": self.resize_image_form(initial=initial_data),
+                "image": image_object.image,
+            },
         )
 
     def post(self, request, *args, **kwargs):
@@ -62,20 +62,21 @@ class ImageResizeView(View):
             image_field = self.get_object().image
             result = task_image_reize.delay(
                 image=image_field,
-                width=form.cleaned_data['width'],
-                height=form.cleaned_data['height'],
-                aspect_ratio=form.cleaned_data['aspect_ratio'],
-            ) # type: ignore
+                width=form.cleaned_data["width"],
+                height=form.cleaned_data["height"],
+                aspect_ratio=form.cleaned_data["aspect_ratio"],
+            )  # type: ignore
             uid = result.get()
-            return redirect(reverse('images:image_download', kwargs={'uidb64': uid}))
-        return render(request, 'image_resizing.html', {'form':form})
+            return redirect(reverse("images:image_download", kwargs={"uidb64": uid}))
+        return render(request, "image_resizing.html", {"form": form})
 
 
 class DownloadImageView(View):
-
     def get_object(self):
-        image_name = urlsafe_base64_decode(self.kwargs.get('uidb64')).decode()
+        image_name = urlsafe_base64_decode(self.kwargs.get("uidb64")).decode()
         return get_object_or_404(UploadImage.objects.all(), image=image_name)
 
     def get(self, request, *args, **kwargs):
-        return render(request, 'image_download.html', {'image_object':self.get_object()})
+        return render(
+            request, "image_download.html", {"image_object": self.get_object()}
+        )
